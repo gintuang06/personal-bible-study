@@ -29,6 +29,7 @@
     <button class="view-tab active" data-view="workspace">01 &nbsp; STUDY</button>
     <button class="view-tab" data-view="journal">02 &nbsp; JOURNAL</button>
     <button class="view-tab" data-view="library">03 &nbsp; LIBRARY</button>
+    <button class="view-tab" data-view="canvas">04 &nbsp; CANVAS</button>
   </nav>
 
   <!-- ============================================================
@@ -183,6 +184,28 @@
           <ul id="library-list" class="library-list"></ul>
         </div>
       </section>
+
+    </div>
+  </main>
+
+  <!-- ============================================================
+       VIEW: CANVAS — freeform mind-map of connected thoughts
+  ============================================================= -->
+  <main class="view" id="view-canvas">
+    <div class="canvas-layout">
+
+      <div class="canvas-toolbar">
+        <button id="add-node-btn" class="btn btn-primary btn-compact">+ NODE</button>
+        <button id="link-mode-btn" class="btn btn-secondary btn-compact">LINK MODE: OFF</button>
+        <span id="canvas-hint" class="canvas-hint">Drag a node's header to move it. Turn on link mode, then click two nodes to connect them. Click a line to remove it.</span>
+      </div>
+
+      <div class="canvas-scroll" id="canvas-scroll">
+        <div class="canvas-surface" id="canvas-surface">
+          <svg id="canvas-links-svg" class="canvas-links-svg"></svg>
+          <!-- Nodes are injected here by main.js -->
+        </div>
+      </div>
 
     </div>
   </main>
