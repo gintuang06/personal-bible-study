@@ -148,7 +148,14 @@ const dom = {
   uploadDropzone: document.getElementById("upload-dropzone"),
   fileUploadInput: document.getElementById("file-upload-input"),
   libraryList: document.getElementById("library-list"),
-  libraryCount: document.getElementById("library-count")
+  libraryCount: document.getElementById("library-count"),
+
+  // Canvas
+  addNodeBtn: document.getElementById("add-node-btn"),
+  linkModeBtn: document.getElementById("link-mode-btn"),
+  canvasScroll: document.getElementById("canvas-scroll"),
+  canvasSurface: document.getElementById("canvas-surface"),
+  canvasLinksSvg: document.getElementById("canvas-links-svg")
 };
 
 /* ==================================================================
@@ -159,7 +166,16 @@ const state = {
   currentBook: null,
   currentChapter: null,
   selectedVerseRef: null,   // e.g. "John 1:1"
-  activeJournalEntryId: null
+  activeJournalEntryId: null,
+
+  // Canvas
+  canvasNodes: [],          // [{ id, x, y, title, content }]
+  canvasLinks: [],          // [{ id, sourceId, targetId }]
+  linkModeActive: false,
+  pendingLinkSourceId: null,
+  draggingNodeId: null,
+  dragOffsetX: 0,
+  dragOffsetY: 0
 };
 
 /* ==================================================================
@@ -448,6 +464,123 @@ async function renderLibraryList() {
   });
 }
 
+// ---------------- Canvas ----------------
+
+// Re-render every node card from scratch. Called on load and whenever
+// nodes are added/removed; in-place drag/typing avoids calling this
+// so the DOM (and text cursor position) stays stable while editing.
+function renderCanvasNodes() {
+  // Remove existing node elements only (leave the SVG link layer intact).
+  dom.canvasSurface.querySelectorAll(".canvas-node").forEach((el) => el.remove());
+
+  state.canvasNodes.forEach((node) => {
+    const card = document.createElement("div");
+    card.className = "canvas-node";
+    card.dataset.id = node.id;
+    card.style.left = `${node.x}px`;
+    card.style.top = `${node.y}px`;
+
+    const header = document.createElement("div");
+    header.className = "canvas-node-header";
+
+    const titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.className = "canvas-node-title";
+    titleInput.value = node.title;
+    titleInput.placeholder = "Thought title...";
+    titleInput.addEventListener("input", () => {
+      node.title = titleInput.value;
+      saveCanvasNodes(state.canvasNodes);
+      setSaveStatus(false);
+      setTimeout(() => setSaveStatus(true), 400);
+    });
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "canvas-node-delete";
+    deleteBtn.textContent = "×";
+    deleteBtn.setAttribute("aria-label", "Delete node");
+    deleteBtn.addEventListener("pointerdown", (event) => event.stopPropagation());
+    deleteBtn.addEventListener("click", () => handleDeleteNode(node.id));
+
+    header.appendChild(titleInput);
+    header.appendChild(deleteBtn);
+
+    const body = document.createElement("textarea");
+    body.className = "canvas-node-body";
+    body.value = node.content;
+    body.placeholder = "Write the thought here...";
+    body.addEventListener("input", () => {
+      node.content = body.value;
+      saveCanvasNodes(state.canvasNodes);
+      setSaveStatus(false);
+      setTimeout(() => setSaveStatus(true), 400);
+    });
+    body.addEventListener("pointerdown", (event) => event.stopPropagation());
+
+    card.appendChild(header);
+    card.appendChild(body);
+
+    header.addEventListener("pointerdown", (event) => handleNodePointerDown(event, node.id));
+    card.addEventListener("click", (event) => handleNodeClickForLinking(event, node.id));
+
+    dom.canvasSurface.appendChild(card);
+  });
+
+  renderCanvasLinkModeVisuals();
+  renderCanvasLinks();
+}
+
+// Redraw only the SVG connecting lines (cheap — called continuously while dragging).
+function renderCanvasLinks() {
+  dom.canvasLinksSvg.innerHTML = "";
+
+  state.canvasLinks.forEach((link) => {
+    const source = state.canvasNodes.find((node) => node.id === link.sourceId);
+    const target = state.canvasNodes.find((node) => node.id === link.targetId);
+    if (!source || !target) return;
+
+    const nodeWidth = 230;
+    const nodeHeight = 122; // approximate rendered card height (header + body)
+    const x1 = source.x + nodeWidth / 2;
+    const y1 = source.y + nodeHeight / 2;
+    const x2 = target.x + nodeWidth / 2;
+    const y2 = target.y + nodeHeight / 2;
+
+    const hitLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    hitLine.setAttribute("x1", x1);
+    hitLine.setAttribute("y1", y1);
+    hitLine.setAttribute("x2", x2);
+    hitLine.setAttribute("y2", y2);
+    hitLine.setAttribute("class", "canvas-link-hit");
+
+    const visibleLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    visibleLine.setAttribute("x1", x1);
+    visibleLine.setAttribute("y1", y1);
+    visibleLine.setAttribute("x2", x2);
+    visibleLine.setAttribute("y2", y2);
+    visibleLine.setAttribute("class", "canvas-link-visible");
+
+    hitLine.addEventListener("click", () => handleDeleteLink(link.id));
+
+    dom.canvasLinksSvg.appendChild(hitLine);
+    dom.canvasLinksSvg.appendChild(visibleLine);
+  });
+}
+
+// Toggle visual state (highlight pending source, cursor affordance) for link mode.
+function renderCanvasLinkModeVisuals() {
+  dom.linkModeBtn.textContent = `LINK MODE: ${state.linkModeActive ? "ON" : "OFF"}`;
+  dom.linkModeBtn.classList.toggle("active", state.linkModeActive);
+
+  dom.canvasSurface.querySelectorAll(".canvas-node").forEach((card) => {
+    card.classList.toggle("link-selectable", state.linkModeActive);
+    card.classList.toggle(
+      "link-pending",
+      state.linkModeActive && card.dataset.id === state.pendingLinkSourceId
+    );
+  });
+}
+
 /* ==================================================================
    4. EVENT HANDLERS
 ================================================================== */
@@ -631,6 +764,156 @@ async function handleDeleteDocument(id) {
   setSaveStatus(true);
 }
 
+// ---------------- Canvas ----------------
+
+function handleAddNode() {
+  // Cascade new nodes so they don't all stack in the exact same spot.
+  const count = state.canvasNodes.length;
+  const offset = (count % 8) * 36;
+
+  const node = {
+    id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    x: 60 + offset,
+    y: 60 + offset,
+    title: "New Thought",
+    content: ""
+  };
+
+  state.canvasNodes.push(node);
+  saveCanvasNodes(state.canvasNodes);
+  renderCanvasNodes();
+  setSaveStatus(true);
+
+  // Scroll the new node into view and focus its title for immediate editing.
+  const newCard = dom.canvasSurface.querySelector(`[data-id="${node.id}"]`);
+  if (newCard) {
+    newCard.scrollIntoView({ block: "center", inline: "center", behavior: "smooth" });
+    const titleInput = newCard.querySelector(".canvas-node-title");
+    if (titleInput) titleInput.focus();
+  }
+}
+
+function handleDeleteNode(nodeId) {
+  state.canvasNodes = state.canvasNodes.filter((node) => node.id !== nodeId);
+  state.canvasLinks = state.canvasLinks.filter(
+    (link) => link.sourceId !== nodeId && link.targetId !== nodeId
+  );
+  if (state.pendingLinkSourceId === nodeId) {
+    state.pendingLinkSourceId = null;
+  }
+  saveCanvasNodes(state.canvasNodes);
+  saveCanvasLinks(state.canvasLinks);
+  renderCanvasNodes();
+  setSaveStatus(true);
+}
+
+function handleDeleteLink(linkId) {
+  state.canvasLinks = state.canvasLinks.filter((link) => link.id !== linkId);
+  saveCanvasLinks(state.canvasLinks);
+  renderCanvasLinks();
+  setSaveStatus(true);
+}
+
+function handleToggleLinkMode() {
+  state.linkModeActive = !state.linkModeActive;
+  state.pendingLinkSourceId = null;
+  renderCanvasLinkModeVisuals();
+}
+
+// Clicking a node while link mode is active either marks it as the pending
+// source, or — if a source is already pending — completes the connection.
+function handleNodeClickForLinking(event, nodeId) {
+  if (!state.linkModeActive) return;
+  if (event.target.tagName === "INPUT" || event.target.tagName === "TEXTAREA" || event.target.tagName === "BUTTON") {
+    return;
+  }
+
+  if (!state.pendingLinkSourceId) {
+    state.pendingLinkSourceId = nodeId;
+    renderCanvasLinkModeVisuals();
+    return;
+  }
+
+  if (state.pendingLinkSourceId === nodeId) {
+    // Clicked the same node twice — cancel the pending link.
+    state.pendingLinkSourceId = null;
+    renderCanvasLinkModeVisuals();
+    return;
+  }
+
+  const alreadyLinked = state.canvasLinks.some(
+    (link) =>
+      (link.sourceId === state.pendingLinkSourceId && link.targetId === nodeId) ||
+      (link.sourceId === nodeId && link.targetId === state.pendingLinkSourceId)
+  );
+
+  if (!alreadyLinked) {
+    const link = {
+      id: `link-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      sourceId: state.pendingLinkSourceId,
+      targetId: nodeId
+    };
+    state.canvasLinks.push(link);
+    saveCanvasLinks(state.canvasLinks);
+    renderCanvasLinks();
+    setSaveStatus(true);
+  }
+
+  state.pendingLinkSourceId = null;
+  state.linkModeActive = false;
+  renderCanvasLinkModeVisuals();
+}
+
+// Begin dragging a node from its header. Only active when link mode is off.
+function handleNodePointerDown(event, nodeId) {
+  if (state.linkModeActive) return;
+  if (event.target.tagName === "INPUT" || event.target.tagName === "BUTTON") return;
+
+  const node = state.canvasNodes.find((item) => item.id === nodeId);
+  if (!node) return;
+
+  state.draggingNodeId = nodeId;
+  const surfaceRect = dom.canvasSurface.getBoundingClientRect();
+  state.dragOffsetX = event.clientX - surfaceRect.left - node.x;
+  state.dragOffsetY = event.clientY - surfaceRect.top - node.y;
+
+  event.preventDefault();
+  window.addEventListener("pointermove", handleNodePointerMove);
+  window.addEventListener("pointerup", handleNodePointerUp);
+}
+
+function handleNodePointerMove(event) {
+  if (!state.draggingNodeId) return;
+
+  const node = state.canvasNodes.find((item) => item.id === state.draggingNodeId);
+  if (!node) return;
+
+  const surfaceRect = dom.canvasSurface.getBoundingClientRect();
+  const maxX = dom.canvasSurface.offsetWidth - 230;
+  const maxY = dom.canvasSurface.offsetHeight - 122;
+
+  node.x = Math.min(Math.max(0, event.clientX - surfaceRect.left - state.dragOffsetX), maxX);
+  node.y = Math.min(Math.max(0, event.clientY - surfaceRect.top - state.dragOffsetY), maxY);
+
+  const card = dom.canvasSurface.querySelector(`[data-id="${node.id}"]`);
+  if (card) {
+    card.style.left = `${node.x}px`;
+    card.style.top = `${node.y}px`;
+  }
+
+  renderCanvasLinks();
+}
+
+function handleNodePointerUp() {
+  if (state.draggingNodeId) {
+    saveCanvasNodes(state.canvasNodes);
+    setSaveStatus(true);
+  }
+  state.draggingNodeId = null;
+  window.removeEventListener("pointermove", handleNodePointerMove);
+  window.removeEventListener("pointerup", handleNodePointerUp);
+}
+
 // ---------------- Shared ----------------
 
 function handleUnsavedInput() {
@@ -643,7 +926,9 @@ function handleUnsavedInput() {
 
 const STORAGE_KEYS = {
   notesPrefix: "bibleStudyWorkspace.note.",
-  journalEntries: "bibleStudyWorkspace.journalEntries"
+  journalEntries: "bibleStudyWorkspace.journalEntries",
+  canvasNodes: "bibleStudyWorkspace.canvasNodes",
+  canvasLinks: "bibleStudyWorkspace.canvasLinks"
 };
 
 // ---- Verse notes (localStorage — small text, per-verse) ----
@@ -680,6 +965,38 @@ function loadJournalEntries() {
 
 function saveJournalEntries(entries) {
   localStorage.setItem(STORAGE_KEYS.journalEntries, JSON.stringify(entries));
+}
+
+// ---- Canvas nodes and links (localStorage — small structured JSON) ----
+
+function loadCanvasNodes() {
+  const raw = localStorage.getItem(STORAGE_KEYS.canvasNodes);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error("Could not parse canvas nodes:", error);
+    return [];
+  }
+}
+
+function saveCanvasNodes(nodes) {
+  localStorage.setItem(STORAGE_KEYS.canvasNodes, JSON.stringify(nodes));
+}
+
+function loadCanvasLinks() {
+  const raw = localStorage.getItem(STORAGE_KEYS.canvasLinks);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error("Could not parse canvas links:", error);
+    return [];
+  }
+}
+
+function saveCanvasLinks(links) {
+  localStorage.setItem(STORAGE_KEYS.canvasLinks, JSON.stringify(links));
 }
 
 // ---- Document library (IndexedDB — handles larger files like PDFs) ----
@@ -780,6 +1097,10 @@ function attachEventListeners() {
   dom.uploadDropzone.addEventListener("dragover", handleDropzoneDragOver);
   dom.uploadDropzone.addEventListener("dragleave", handleDropzoneDragLeave);
   dom.uploadDropzone.addEventListener("drop", handleDropzoneDrop);
+
+  // Canvas
+  dom.addNodeBtn.addEventListener("click", handleAddNode);
+  dom.linkModeBtn.addEventListener("click", handleToggleLinkMode);
 }
 
 async function init() {
@@ -802,6 +1123,11 @@ async function init() {
 
   // Library: restore saved documents from IndexedDB.
   await renderLibraryList();
+
+  // Canvas: restore saved nodes and links.
+  state.canvasNodes = loadCanvasNodes();
+  state.canvasLinks = loadCanvasLinks();
+  renderCanvasNodes();
 
   setSaveStatus(true);
 }
