@@ -690,6 +690,148 @@ textarea:focus-visible {
 }
 
 /* ==================================================================
+   CANVAS VIEW — freeform mind-map of connected thoughts
+================================================================== */
+
+.canvas-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 96px);
+}
+
+.canvas-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background-color: var(--panel-header-bg);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.link-mode-btn.active {
+  background-color: var(--text);
+  color: var(--bg);
+}
+
+.canvas-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+}
+
+.canvas-scroll {
+  flex: 1;
+  overflow: auto;
+  background-color: var(--bg);
+}
+
+.canvas-surface {
+  position: relative;
+  width: 2600px;
+  height: 1700px;
+  background-image: radial-gradient(var(--line-dim) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.canvas-links-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.canvas-link-hit {
+  stroke: transparent;
+  stroke-width: 16px;
+  fill: none;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.canvas-link-visible {
+  stroke: var(--text);
+  stroke-width: 1.5px;
+  fill: none;
+  pointer-events: none;
+}
+
+.canvas-link-hit:hover + .canvas-link-visible,
+.canvas-link-visible.hover {
+  stroke-width: 2.5px;
+}
+
+.canvas-node {
+  position: absolute;
+  width: 230px;
+  border: 1px solid var(--line);
+  background-color: var(--panel-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-node.link-pending {
+  border: 1px dashed var(--text);
+  background-color: var(--panel-header-bg);
+}
+
+.canvas-node.link-selectable {
+  cursor: pointer;
+}
+
+.canvas-node-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid var(--line-dim);
+  padding: 6px 8px;
+  background-color: var(--panel-header-bg);
+  cursor: grab;
+}
+
+.canvas-node-header:active {
+  cursor: grabbing;
+}
+
+.canvas-node-title {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  padding: 2px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  background: none;
+}
+
+.canvas-node-delete {
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  padding: 2px 7px;
+  font-size: 11px;
+  line-height: 1;
+  background-color: var(--bg);
+}
+
+.canvas-node-delete:hover {
+  background-color: var(--text);
+  color: var(--bg);
+}
+
+.canvas-node-body {
+  border: none;
+  height: 90px;
+  padding: 8px;
+  resize: none;
+  font-size: 12px;
+  line-height: 1.5;
+  background-color: var(--panel-bg);
+  overflow-y: auto;
+}
+
+/* ==================================================================
    RESPONSIVE
 ================================================================== */
 
