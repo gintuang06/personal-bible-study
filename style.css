@@ -1,0 +1,422 @@
+/* ==================================================================
+   BIBLE STUDY WORKSPACE — STYLESHEET
+   Strict black & white. Zero border-radius. Grid-based workstation UI.
+================================================================== */
+
+/* ---------------- RESET & BASE ---------------- */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  border-radius: 0 !important; /* absolute rule: nothing is ever rounded */
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: "Courier New", Courier, monospace;
+  background-color: #FFFFFF;
+  color: #000000;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  border: 1px solid #000000;
+  outline: none;
+}
+
+button {
+  cursor: pointer;
+  letter-spacing: 0.05em;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+ul {
+  list-style: none;
+}
+
+/* Sharp keyboard focus, no glow */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+/* ==================================================================
+   HEADER — command bar
+================================================================== */
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid #000000;
+  background-color: #FAFAFA;
+}
+
+.app-title {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.save-status {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.save-status.unsaved {
+  text-decoration: underline;
+}
+
+.divider {
+  opacity: 0.4;
+}
+
+/* ==================================================================
+   MAIN WORKSPACE — three column grid
+================================================================== */
+
+.workspace {
+  display: grid;
+  grid-template-columns: 260px 1fr 340px;
+  min-height: 0;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #000000;
+  margin: -1px 0 0 -1px; /* collapse adjoining borders into single 1px lines */
+  min-height: 0;
+  background-color: #FFFFFF;
+}
+
+.panel-header {
+  border-bottom: 1px solid #000000;
+  padding: 10px 14px;
+  background-color: #FAFAFA;
+  flex-shrink: 0;
+}
+
+.panel-header h2 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.panel-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ==================================================================
+   LEFT PANEL — Bible Navigation
+================================================================== */
+
+.nav-panel {
+  border-right: none;
+}
+
+.nav-body {
+  overflow: hidden;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+
+.chapter-select-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  border: 1px solid #000000;
+  padding: 8px 10px;
+}
+
+.chapter-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.chapter-select {
+  flex: 1;
+  padding: 4px 6px;
+  border: 1px solid #000000;
+}
+
+.book-list {
+  overflow-y: auto;
+  border: 1px solid #000000;
+  flex: 1;
+  min-height: 0;
+}
+
+.book-list li {
+  padding: 8px 10px;
+  border-bottom: 1px solid #000000;
+  font-size: 13px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+
+.book-list li:last-child {
+  border-bottom: none;
+}
+
+.book-list li:hover {
+  background-color: #FAFAFA;
+  text-decoration: underline;
+}
+
+.book-list li.active {
+  background-color: #000000;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.book-list li.no-match {
+  cursor: default;
+  opacity: 0.4;
+  font-style: italic;
+}
+
+.book-list li.no-match:hover {
+  background-color: transparent;
+  text-decoration: none;
+}
+
+/* ==================================================================
+   CENTER PANEL — Scripture Viewer
+================================================================== */
+
+.scripture-body {
+  overflow: hidden;
+}
+
+.scripture-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.scripture-book {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.scripture-chapter {
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+.verse-container {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+.verse-line {
+  padding: 10px 12px;
+  border-bottom: 1px solid #FAFAFA;
+  cursor: pointer;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.verse-line:hover {
+  background-color: #FAFAFA;
+}
+
+.verse-line.selected {
+  background-color: #000000;
+  color: #FFFFFF;
+}
+
+.verse-number {
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.empty-state {
+  padding: 20px 4px;
+  opacity: 0.5;
+  font-size: 13px;
+}
+
+/* ==================================================================
+   RIGHT PANEL — Study Notes
+================================================================== */
+
+.notes-panel {
+  border-left: none;
+}
+
+.notes-body {
+  overflow: hidden;
+}
+
+.notes-reference-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid #000000;
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+
+.notes-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+.notes-reference {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.notes-textarea {
+  flex: 1;
+  min-height: 140px;
+  padding: 10px;
+  resize: none;
+  line-height: 1.6;
+  font-size: 13px;
+}
+
+/* ==================================================================
+   BUTTONS
+================================================================== */
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.btn-primary {
+  background-color: #000000;
+  color: #FFFFFF;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #FFFFFF;
+  color: #000000;
+}
+
+.btn-secondary {
+  background-color: #FFFFFF;
+  color: #000000;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: #000000;
+  color: #FFFFFF;
+}
+
+/* ==================================================================
+   BOTTOM PANEL — Daily Journal
+================================================================== */
+
+.journal-panel {
+  margin-top: -1px;
+}
+
+.journal-body {
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.journal-textarea {
+  flex: 1;
+  min-height: 120px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.6;
+  font-size: 13px;
+}
+
+.journal-body .button-row {
+  flex-direction: column;
+  width: 160px;
+  flex-shrink: 0;
+}
+
+/* ==================================================================
+   RESPONSIVE
+================================================================== */
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    grid-auto-rows: minmax(220px, auto);
+  }
+
+  .nav-panel,
+  .notes-panel {
+    border-right: 1px solid #000000;
+    border-left: 1px solid #000000;
+  }
+
+  .journal-body {
+    flex-direction: column;
+  }
+
+  .journal-body .button-row {
+    flex-direction: row;
+    width: 100%;
+  }
+}
