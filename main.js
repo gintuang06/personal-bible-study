@@ -5,7 +5,7 @@
      2. DOM references
      3. Rendering functions
      4. Event handlers
-     5. LocalStorage functions
+     5. LocalStorage / IndexedDB functions
      6. Initialization
 ================================================================== */
 
@@ -115,23 +115,40 @@ const dom = {
   saveStatus: document.getElementById("save-status"),
   currentDate: document.getElementById("current-date"),
 
+  viewTabs: document.querySelectorAll(".view-tab"),
+  views: {
+    workspace: document.getElementById("view-workspace"),
+    journal: document.getElementById("view-journal"),
+    library: document.getElementById("view-library")
+  },
+
+  // Study workspace
   bookSearch: document.getElementById("book-search"),
   bookList: document.getElementById("book-list"),
   chapterSelectRow: document.getElementById("chapter-select-row"),
   chapterSelect: document.getElementById("chapter-select"),
-
   scriptureBook: document.getElementById("scripture-book"),
   scriptureChapter: document.getElementById("scripture-chapter"),
   verseContainer: document.getElementById("verse-container"),
-
   notesReference: document.getElementById("notes-reference"),
   notesTextarea: document.getElementById("notes-textarea"),
   saveNoteBtn: document.getElementById("save-note-btn"),
   clearNoteBtn: document.getElementById("clear-note-btn"),
 
-  journalTextarea: document.getElementById("journal-textarea"),
+  // Journal
+  newEntryBtn: document.getElementById("new-entry-btn"),
+  journalEntryList: document.getElementById("journal-entry-list"),
+  journalTitleInput: document.getElementById("journal-title-input"),
+  journalEntryDate: document.getElementById("journal-entry-date"),
+  journalEditorTextarea: document.getElementById("journal-editor-textarea"),
   saveJournalBtn: document.getElementById("save-journal-btn"),
-  clearJournalBtn: document.getElementById("clear-journal-btn")
+  deleteJournalBtn: document.getElementById("delete-journal-btn"),
+
+  // Library
+  uploadDropzone: document.getElementById("upload-dropzone"),
+  fileUploadInput: document.getElementById("file-upload-input"),
+  libraryList: document.getElementById("library-list"),
+  libraryCount: document.getElementById("library-count")
 };
 
 /* ==================================================================
@@ -141,21 +158,40 @@ const dom = {
 const state = {
   currentBook: null,
   currentChapter: null,
-  selectedVerseRef: null // e.g. "John 1:1"
+  selectedVerseRef: null,   // e.g. "John 1:1"
+  activeJournalEntryId: null
 };
 
 /* ==================================================================
    3. RENDERING FUNCTIONS
 ================================================================== */
 
-// Render today's date into the header, in "August 15, 2026" style.
+// ---------------- Header ----------------
+
 function renderCurrentDate() {
   const today = new Date();
   const options = { year: "numeric", month: "long", day: "numeric" };
   dom.currentDate.textContent = today.toLocaleDateString("en-US", options);
 }
 
-// Render the left-panel book list, optionally filtered by a search term.
+function setSaveStatus(isSaved) {
+  dom.saveStatus.textContent = isSaved ? "Saved" : "Unsaved";
+  dom.saveStatus.classList.toggle("unsaved", !isSaved);
+}
+
+// ---------------- View switching ----------------
+
+function renderActiveView(viewName) {
+  Object.entries(dom.views).forEach(([name, el]) => {
+    el.classList.toggle("active", name === viewName);
+  });
+  dom.viewTabs.forEach((tab) => {
+    tab.classList.toggle("active", tab.dataset.view === viewName);
+  });
+}
+
+// ---------------- Study workspace ----------------
+
 function renderBookList(filterText = "") {
   dom.bookList.innerHTML = "";
   const query = filterText.trim().toLowerCase();
@@ -183,7 +219,6 @@ function renderBookList(filterText = "") {
   });
 }
 
-// Populate the chapter dropdown for the currently selected book.
 function renderChapterSelect(book) {
   const chapters = SCRIPTURE_DATA[book] ? Object.keys(SCRIPTURE_DATA[book]) : [];
 
@@ -205,7 +240,6 @@ function renderChapterSelect(book) {
     });
 }
 
-// Render the scripture heading and verse list for the current book/chapter.
 function renderScripture(book, chapter) {
   dom.scriptureBook.textContent = book;
   dom.scriptureChapter.textContent = chapter ? `Chapter ${chapter}` : "";
@@ -248,7 +282,6 @@ function renderScripture(book, chapter) {
   });
 }
 
-// Render the notes panel for a given verse reference (or a cleared state).
 function renderNotesPanel(verseRef) {
   if (!verseRef) {
     dom.notesReference.textContent = "None";
@@ -266,17 +299,167 @@ function renderNotesPanel(verseRef) {
   dom.notesTextarea.value = loadNote(verseRef) || "";
 }
 
-// Update the "Saved" / "Unsaved" indicator in the header.
-function setSaveStatus(isSaved) {
-  dom.saveStatus.textContent = isSaved ? "Saved" : "Unsaved";
-  dom.saveStatus.classList.toggle("unsaved", !isSaved);
+// ---------------- Journal ----------------
+
+function formatEntryTimestamp(isoString) {
+  const date = new Date(isoString);
+  const options = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  };
+  return date.toLocaleString("en-US", options);
+}
+
+function renderJournalEntryList() {
+  const entries = loadJournalEntries().sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
+
+  dom.journalEntryList.innerHTML = "";
+
+  if (entries.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "journal-empty-list";
+    empty.textContent = "No entries yet. Click + NEW to start writing.";
+    dom.journalEntryList.appendChild(empty);
+    return;
+  }
+
+  entries.forEach((entry) => {
+    const item = document.createElement("li");
+    item.className = "journal-entry-item";
+    if (entry.id === state.activeJournalEntryId) {
+      item.classList.add("active");
+    }
+
+    const titleEl = document.createElement("span");
+    titleEl.className = "journal-entry-item-title";
+    titleEl.textContent = entry.title || "Untitled Entry";
+
+    const dateEl = document.createElement("span");
+    dateEl.className = "journal-entry-item-date";
+    dateEl.textContent = formatEntryTimestamp(entry.createdAt);
+
+    const snippetEl = document.createElement("span");
+    snippetEl.className = "journal-entry-item-snippet";
+    snippetEl.textContent = entry.content
+      ? entry.content.replace(/\s+/g, " ").trim()
+      : "(empty entry)";
+
+    item.appendChild(titleEl);
+    item.appendChild(dateEl);
+    item.appendChild(snippetEl);
+
+    item.addEventListener("click", () => handleJournalEntrySelect(entry.id));
+    dom.journalEntryList.appendChild(item);
+  });
+}
+
+function renderJournalEditor(entry) {
+  if (!entry) {
+    dom.journalTitleInput.value = "";
+    dom.journalTitleInput.disabled = true;
+    dom.journalEntryDate.textContent = "No entry selected";
+    dom.journalEditorTextarea.value = "";
+    dom.journalEditorTextarea.disabled = true;
+    dom.saveJournalBtn.disabled = true;
+    dom.deleteJournalBtn.disabled = true;
+    return;
+  }
+
+  dom.journalTitleInput.value = entry.title || "";
+  dom.journalTitleInput.disabled = false;
+  dom.journalEntryDate.textContent = formatEntryTimestamp(entry.createdAt);
+  dom.journalEditorTextarea.value = entry.content || "";
+  dom.journalEditorTextarea.disabled = false;
+  dom.saveJournalBtn.disabled = false;
+  dom.deleteJournalBtn.disabled = false;
+}
+
+// ---------------- Library ----------------
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatFileDate(isoString) {
+  const date = new Date(isoString);
+  const options = { year: "numeric", month: "short", day: "numeric" };
+  return date.toLocaleDateString("en-US", options);
+}
+
+async function renderLibraryList() {
+  const documents = await getAllDocuments();
+  documents.sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+
+  dom.libraryList.innerHTML = "";
+  dom.libraryCount.textContent = `${documents.length} file${documents.length === 1 ? "" : "s"}`;
+
+  if (documents.length === 0) {
+    const empty = document.createElement("li");
+    empty.className = "library-empty";
+    empty.textContent = "No documents yet. Add a file above to build your library.";
+    dom.libraryList.appendChild(empty);
+    return;
+  }
+
+  documents.forEach((doc) => {
+    const item = document.createElement("li");
+    item.className = "library-item";
+
+    const info = document.createElement("div");
+    info.className = "library-item-info";
+
+    const name = document.createElement("span");
+    name.className = "library-item-name";
+    name.textContent = doc.name;
+
+    const meta = document.createElement("span");
+    meta.className = "library-item-meta";
+    meta.textContent = `${doc.type || "FILE"} · ${formatFileSize(doc.size)} · ${formatFileDate(doc.dateAdded)}`;
+
+    info.appendChild(name);
+    info.appendChild(meta);
+
+    const viewBtn = document.createElement("button");
+    viewBtn.textContent = "VIEW";
+    viewBtn.addEventListener("click", () => handleViewDocument(doc));
+
+    const downloadBtn = document.createElement("button");
+    downloadBtn.textContent = "DOWNLOAD";
+    downloadBtn.addEventListener("click", () => handleDownloadDocument(doc));
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "btn-danger";
+    deleteBtn.textContent = "DELETE";
+    deleteBtn.addEventListener("click", () => handleDeleteDocument(doc.id));
+
+    item.appendChild(info);
+    item.appendChild(viewBtn);
+    item.appendChild(downloadBtn);
+    item.appendChild(deleteBtn);
+
+    dom.libraryList.appendChild(item);
+  });
 }
 
 /* ==================================================================
    4. EVENT HANDLERS
 ================================================================== */
 
-// Handle a click on a book in the left panel.
+// ---------------- View tabs ----------------
+
+function handleViewTabClick(viewName) {
+  renderActiveView(viewName);
+}
+
+// ---------------- Study workspace ----------------
+
 function handleBookSelect(book) {
   state.currentBook = book;
   state.selectedVerseRef = null;
@@ -298,7 +481,6 @@ function handleBookSelect(book) {
   renderNotesPanel(null);
 }
 
-// Handle a change in the chapter dropdown.
 function handleChapterChange() {
   const chapter = Number(dom.chapterSelect.value);
   state.currentChapter = chapter;
@@ -307,11 +489,9 @@ function handleChapterChange() {
   renderNotesPanel(null);
 }
 
-// Handle a click on a verse within the scripture viewer.
 function handleVerseSelect(verseRef) {
   state.selectedVerseRef = verseRef;
 
-  // Update selection highlight without a full re-render.
   document.querySelectorAll(".verse-line").forEach((line) => {
     line.classList.toggle("selected", line.dataset.ref === verseRef);
   });
@@ -319,19 +499,16 @@ function handleVerseSelect(verseRef) {
   renderNotesPanel(verseRef);
 }
 
-// Handle the book search input.
 function handleBookSearch() {
   renderBookList(dom.bookSearch.value);
 }
 
-// Handle saving the current note.
 function handleSaveNote() {
   if (!state.selectedVerseRef) return;
   saveNote(state.selectedVerseRef, dom.notesTextarea.value);
   setSaveStatus(true);
 }
 
-// Handle clearing the current note.
 function handleClearNote() {
   if (!state.selectedVerseRef) return;
   dom.notesTextarea.value = "";
@@ -339,34 +516,138 @@ function handleClearNote() {
   setSaveStatus(true);
 }
 
-// Handle saving the journal entry.
-function handleSaveJournal() {
-  saveJournal(dom.journalTextarea.value);
+// ---------------- Journal ----------------
+
+function handleNewJournalEntry() {
+  const entry = {
+    id: `entry-${Date.now()}`,
+    title: "Untitled Entry",
+    content: "",
+    createdAt: new Date().toISOString()
+  };
+
+  const entries = loadJournalEntries();
+  entries.push(entry);
+  saveJournalEntries(entries);
+
+  state.activeJournalEntryId = entry.id;
+  renderJournalEntryList();
+  renderJournalEditor(entry);
+  dom.journalTitleInput.focus();
   setSaveStatus(true);
 }
 
-// Handle clearing the journal entry.
-function handleClearJournal() {
-  dom.journalTextarea.value = "";
-  deleteJournal();
+function handleJournalEntrySelect(entryId) {
+  state.activeJournalEntryId = entryId;
+  const entries = loadJournalEntries();
+  const entry = entries.find((item) => item.id === entryId);
+  renderJournalEntryList();
+  renderJournalEditor(entry);
+}
+
+function handleSaveJournalEntry() {
+  if (!state.activeJournalEntryId) return;
+
+  const entries = loadJournalEntries();
+  const index = entries.findIndex((item) => item.id === state.activeJournalEntryId);
+  if (index === -1) return;
+
+  entries[index].title = dom.journalTitleInput.value.trim() || "Untitled Entry";
+  entries[index].content = dom.journalEditorTextarea.value;
+  saveJournalEntries(entries);
+
+  renderJournalEntryList();
   setSaveStatus(true);
 }
 
-// Mark unsaved whenever the user types in a textarea.
+function handleDeleteJournalEntry() {
+  if (!state.activeJournalEntryId) return;
+
+  const entries = loadJournalEntries().filter(
+    (item) => item.id !== state.activeJournalEntryId
+  );
+  saveJournalEntries(entries);
+
+  state.activeJournalEntryId = null;
+  renderJournalEntryList();
+  renderJournalEditor(null);
+  setSaveStatus(true);
+}
+
+// ---------------- Library ----------------
+
+async function handleFilesAdded(fileList) {
+  const files = Array.from(fileList);
+  for (const file of files) {
+    await addDocument(file);
+  }
+  await renderLibraryList();
+  setSaveStatus(true);
+}
+
+function handleUploadInputChange(event) {
+  handleFilesAdded(event.target.files);
+  event.target.value = ""; // allow re-uploading the same file later
+}
+
+function handleDropzoneDragOver(event) {
+  event.preventDefault();
+  dom.uploadDropzone.classList.add("drag-over");
+}
+
+function handleDropzoneDragLeave() {
+  dom.uploadDropzone.classList.remove("drag-over");
+}
+
+function handleDropzoneDrop(event) {
+  event.preventDefault();
+  dom.uploadDropzone.classList.remove("drag-over");
+  if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+    handleFilesAdded(event.dataTransfer.files);
+  }
+}
+
+function handleViewDocument(doc) {
+  const url = URL.createObjectURL(doc.blob);
+  window.open(url, "_blank", "noopener");
+  // Release the object URL after a delay to allow the new tab to load it.
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+function handleDownloadDocument(doc) {
+  const url = URL.createObjectURL(doc.blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = doc.name;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+async function handleDeleteDocument(id) {
+  await deleteDocument(id);
+  await renderLibraryList();
+  setSaveStatus(true);
+}
+
+// ---------------- Shared ----------------
+
 function handleUnsavedInput() {
   setSaveStatus(false);
 }
 
 /* ==================================================================
-   5. LOCALSTORAGE FUNCTIONS
+   5. LOCALSTORAGE / INDEXEDDB FUNCTIONS
 ================================================================== */
 
 const STORAGE_KEYS = {
   notesPrefix: "bibleStudyWorkspace.note.",
-  journal: "bibleStudyWorkspace.journal"
+  journalEntries: "bibleStudyWorkspace.journalEntries"
 };
 
-// Save a note for a specific verse reference.
+// ---- Verse notes (localStorage — small text, per-verse) ----
+
 function saveNote(verseRef, text) {
   const key = STORAGE_KEYS.notesPrefix + verseRef;
   if (text.trim() === "") {
@@ -376,29 +657,98 @@ function saveNote(verseRef, text) {
   }
 }
 
-// Load a saved note for a specific verse reference.
 function loadNote(verseRef) {
   return localStorage.getItem(STORAGE_KEYS.notesPrefix + verseRef);
 }
 
-// Delete a saved note for a specific verse reference.
 function deleteNote(verseRef) {
   localStorage.removeItem(STORAGE_KEYS.notesPrefix + verseRef);
 }
 
-// Save the daily journal entry.
-function saveJournal(text) {
-  localStorage.setItem(STORAGE_KEYS.journal, text);
+// ---- Journal entries (localStorage — array of entry objects) ----
+
+function loadJournalEntries() {
+  const raw = localStorage.getItem(STORAGE_KEYS.journalEntries);
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error("Could not parse journal entries:", error);
+    return [];
+  }
 }
 
-// Load the saved daily journal entry.
-function loadJournal() {
-  return localStorage.getItem(STORAGE_KEYS.journal) || "";
+function saveJournalEntries(entries) {
+  localStorage.setItem(STORAGE_KEYS.journalEntries, JSON.stringify(entries));
 }
 
-// Delete the saved daily journal entry.
-function deleteJournal() {
-  localStorage.removeItem(STORAGE_KEYS.journal);
+// ---- Document library (IndexedDB — handles larger files like PDFs) ----
+
+const DB_NAME = "BibleStudyWorkspaceDB";
+const DB_VERSION = 1;
+const DOCS_STORE = "documents";
+
+let dbInstance = null;
+
+function openDatabase() {
+  if (dbInstance) return Promise.resolve(dbInstance);
+
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(DOCS_STORE)) {
+        db.createObjectStore(DOCS_STORE, { keyPath: "id" });
+      }
+    };
+
+    request.onsuccess = () => {
+      dbInstance = request.result;
+      resolve(dbInstance);
+    };
+
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function addDocument(file) {
+  const db = await openDatabase();
+  const record = {
+    id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: file.name,
+    type: (file.type || file.name.split(".").pop() || "FILE").toUpperCase(),
+    size: file.size,
+    dateAdded: new Date().toISOString(),
+    blob: file
+  };
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DOCS_STORE, "readwrite");
+    tx.objectStore(DOCS_STORE).add(record);
+    tx.oncomplete = () => resolve(record);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getAllDocuments() {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DOCS_STORE, "readonly");
+    const request = tx.objectStore(DOCS_STORE).getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function deleteDocument(id) {
+  const db = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DOCS_STORE, "readwrite");
+    tx.objectStore(DOCS_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }
 
 /* ==================================================================
@@ -406,34 +756,52 @@ function deleteJournal() {
 ================================================================== */
 
 function attachEventListeners() {
+  // View tabs
+  dom.viewTabs.forEach((tab) => {
+    tab.addEventListener("click", () => handleViewTabClick(tab.dataset.view));
+  });
+
+  // Study workspace
   dom.bookSearch.addEventListener("input", handleBookSearch);
   dom.chapterSelect.addEventListener("change", handleChapterChange);
-
   dom.saveNoteBtn.addEventListener("click", handleSaveNote);
   dom.clearNoteBtn.addEventListener("click", handleClearNote);
   dom.notesTextarea.addEventListener("input", handleUnsavedInput);
 
-  dom.saveJournalBtn.addEventListener("click", handleSaveJournal);
-  dom.clearJournalBtn.addEventListener("click", handleClearJournal);
-  dom.journalTextarea.addEventListener("input", handleUnsavedInput);
+  // Journal
+  dom.newEntryBtn.addEventListener("click", handleNewJournalEntry);
+  dom.saveJournalBtn.addEventListener("click", handleSaveJournalEntry);
+  dom.deleteJournalBtn.addEventListener("click", handleDeleteJournalEntry);
+  dom.journalEditorTextarea.addEventListener("input", handleUnsavedInput);
+  dom.journalTitleInput.addEventListener("input", handleUnsavedInput);
+
+  // Library
+  dom.fileUploadInput.addEventListener("change", handleUploadInputChange);
+  dom.uploadDropzone.addEventListener("dragover", handleDropzoneDragOver);
+  dom.uploadDropzone.addEventListener("dragleave", handleDropzoneDragLeave);
+  dom.uploadDropzone.addEventListener("drop", handleDropzoneDrop);
 }
 
-function init() {
+async function init() {
   renderCurrentDate();
-  renderBookList();
-  renderNotesPanel(null);
   attachEventListeners();
 
-  // Restore the journal entry automatically on load.
-  dom.journalTextarea.value = loadJournal();
-
-  // Default to John 1 so the workspace shows content immediately.
+  // Study workspace: default to John 1 so it shows content immediately.
+  renderBookList();
+  renderNotesPanel(null);
   handleBookSelect("John");
   if (SCRIPTURE_DATA["John"] && SCRIPTURE_DATA["John"][1]) {
     dom.chapterSelect.value = "1";
     state.currentChapter = 1;
     renderScripture("John", 1);
   }
+
+  // Journal: restore saved entries.
+  renderJournalEntryList();
+  renderJournalEditor(null);
+
+  // Library: restore saved documents from IndexedDB.
+  await renderLibraryList();
 
   setSaveStatus(true);
 }
