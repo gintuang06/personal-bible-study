@@ -23,91 +23,169 @@
   </header>
 
   <!-- ============================================================
-       MAIN AREA — three column grid
+       VIEW TABS — switch between Workspace / Journal / Library
   ============================================================= -->
-  <main class="workspace">
+  <nav class="view-tabs" aria-label="Workspace sections">
+    <button class="view-tab active" data-view="workspace">01 &nbsp; STUDY</button>
+    <button class="view-tab" data-view="journal">02 &nbsp; JOURNAL</button>
+    <button class="view-tab" data-view="library">03 &nbsp; LIBRARY</button>
+  </nav>
 
-    <!-- ---------------- LEFT PANEL: Bible Navigation ---------------- -->
-    <section class="panel nav-panel" aria-label="Bible Navigation">
-      <div class="panel-header">
-        <h2>Bible Navigation</h2>
-      </div>
-      <div class="panel-body nav-body">
-        <input
-          id="book-search"
-          type="text"
-          class="search-input"
-          placeholder="Search books..."
-          aria-label="Search Bible books"
-        />
-        <div class="chapter-select-row" id="chapter-select-row" hidden>
-          <label for="chapter-select" class="chapter-label">Chapter</label>
-          <select id="chapter-select" class="chapter-select"></select>
-        </div>
-        <ul id="book-list" class="book-list"></ul>
-      </div>
-    </section>
+  <!-- ============================================================
+       VIEW: STUDY WORKSPACE — three column grid
+  ============================================================= -->
+  <main class="view active" id="view-workspace">
+    <div class="workspace">
 
-    <!-- ---------------- CENTER PANEL: Scripture Viewer ---------------- -->
-    <section class="panel scripture-panel" aria-label="Scripture Viewer">
-      <div class="panel-header">
-        <h2>Scripture Viewer</h2>
-      </div>
-      <div class="panel-body scripture-body">
-        <div class="scripture-heading">
-          <span id="scripture-book" class="scripture-book">Select a Book</span>
-          <span id="scripture-chapter" class="scripture-chapter"></span>
+      <!-- ---------------- LEFT PANEL: Bible Navigation ---------------- -->
+      <section class="panel nav-panel" aria-label="Bible Navigation">
+        <div class="panel-header">
+          <h2>Bible Navigation</h2>
         </div>
-        <div id="verse-container" class="verse-container">
-          <p class="empty-state">Choose a book from the left panel to begin reading.</p>
+        <div class="panel-body nav-body">
+          <input
+            id="book-search"
+            type="text"
+            class="search-input"
+            placeholder="Search books..."
+            aria-label="Search Bible books"
+          />
+          <div class="chapter-select-row" id="chapter-select-row" hidden>
+            <label for="chapter-select" class="chapter-label">Chapter</label>
+            <select id="chapter-select" class="chapter-select"></select>
+          </div>
+          <ul id="book-list" class="book-list"></ul>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- ---------------- RIGHT PANEL: Study Notes ---------------- -->
-    <section class="panel notes-panel" aria-label="Study Notes">
-      <div class="panel-header">
-        <h2>Study Notes</h2>
-      </div>
-      <div class="panel-body notes-body">
-        <div class="notes-reference-row">
-          <span class="notes-label">Selected Reference</span>
-          <span id="notes-reference" class="notes-reference">None</span>
+      <!-- ---------------- CENTER PANEL: Scripture Viewer ---------------- -->
+      <section class="panel scripture-panel" aria-label="Scripture Viewer">
+        <div class="panel-header">
+          <h2>Scripture Viewer</h2>
         </div>
-        <textarea
-          id="notes-textarea"
-          class="notes-textarea"
-          placeholder="Select a verse and write your study notes here..."
-          disabled
-        ></textarea>
-        <div class="button-row">
-          <button id="save-note-btn" class="btn btn-primary" disabled>SAVE NOTE</button>
-          <button id="clear-note-btn" class="btn btn-secondary" disabled>CLEAR NOTE</button>
+        <div class="panel-body scripture-body">
+          <div class="scripture-heading">
+            <span id="scripture-book" class="scripture-book">Select a Book</span>
+            <span id="scripture-chapter" class="scripture-chapter"></span>
+          </div>
+          <div id="verse-container" class="verse-container">
+            <p class="empty-state">Choose a book from the left panel to begin reading.</p>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
+      <!-- ---------------- RIGHT PANEL: Study Notes ---------------- -->
+      <section class="panel notes-panel" aria-label="Study Notes">
+        <div class="panel-header">
+          <h2>Study Notes</h2>
+        </div>
+        <div class="panel-body notes-body">
+          <div class="notes-reference-row">
+            <span class="notes-label">Selected Reference</span>
+            <span id="notes-reference" class="notes-reference">None</span>
+          </div>
+          <textarea
+            id="notes-textarea"
+            class="notes-textarea"
+            placeholder="Select a verse and write your study notes here..."
+            disabled
+          ></textarea>
+          <div class="button-row">
+            <button id="save-note-btn" class="btn btn-primary" disabled>SAVE NOTE</button>
+            <button id="clear-note-btn" class="btn btn-secondary" disabled>CLEAR NOTE</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
   </main>
 
   <!-- ============================================================
-       BOTTOM PANEL — Daily Journal (full width)
+       VIEW: JOURNAL — archive of dated entries + editor
   ============================================================= -->
-  <section class="panel journal-panel" aria-label="Daily Journal">
-    <div class="panel-header">
-      <h2>Daily Journal</h2>
+  <main class="view" id="view-journal">
+    <div class="journal-layout">
+
+      <!-- ---------------- LEFT: entry list ---------------- -->
+      <section class="panel journal-list-panel" aria-label="Journal Entries">
+        <div class="panel-header journal-list-header">
+          <h2>Journal Entries</h2>
+          <button id="new-entry-btn" class="btn btn-primary btn-compact">+ NEW</button>
+        </div>
+        <div class="panel-body journal-list-body">
+          <ul id="journal-entry-list" class="journal-entry-list"></ul>
+        </div>
+      </section>
+
+      <!-- ---------------- RIGHT: entry editor ---------------- -->
+      <section class="panel journal-editor-panel" aria-label="Journal Editor">
+        <div class="panel-header">
+          <h2>Entry</h2>
+        </div>
+        <div class="panel-body journal-editor-body">
+          <div class="journal-meta-row">
+            <input
+              id="journal-title-input"
+              type="text"
+              class="journal-title-input"
+              placeholder="Entry title..."
+              disabled
+            />
+            <span id="journal-entry-date" class="journal-entry-date">No entry selected</span>
+          </div>
+          <textarea
+            id="journal-editor-textarea"
+            class="journal-editor-textarea"
+            placeholder="Select or create an entry to begin writing..."
+            disabled
+          ></textarea>
+          <div class="button-row">
+            <button id="save-journal-btn" class="btn btn-primary" disabled>SAVE ENTRY</button>
+            <button id="delete-journal-btn" class="btn btn-secondary" disabled>DELETE ENTRY</button>
+          </div>
+        </div>
+      </section>
+
     </div>
-    <div class="panel-body journal-body">
-      <textarea
-        id="journal-textarea"
-        class="journal-textarea"
-        placeholder="Write your daily reflections, prayers, and study observations here..."
-      ></textarea>
-      <div class="button-row">
-        <button id="save-journal-btn" class="btn btn-primary">SAVE JOURNAL</button>
-        <button id="clear-journal-btn" class="btn btn-secondary">CLEAR JOURNAL</button>
-      </div>
+  </main>
+
+  <!-- ============================================================
+       VIEW: LIBRARY — uploaded documents (PDFs, docs, etc.)
+  ============================================================= -->
+  <main class="view" id="view-library">
+    <div class="library-layout">
+
+      <section class="panel library-upload-panel" aria-label="Upload Documents">
+        <div class="panel-header">
+          <h2>Add To Library</h2>
+        </div>
+        <div class="panel-body library-upload-body">
+          <label for="file-upload-input" class="upload-dropzone" id="upload-dropzone">
+            <span class="upload-dropzone-title">DROP FILES OR CLICK TO BROWSE</span>
+            <span class="upload-dropzone-sub">PDF · DOCX · TXT · Images · Any file type</span>
+          </label>
+          <input
+            id="file-upload-input"
+            type="file"
+            class="file-upload-input"
+            multiple
+            hidden
+          />
+        </div>
+      </section>
+
+      <section class="panel library-list-panel" aria-label="Document Library">
+        <div class="panel-header">
+          <h2>Documents</h2>
+          <span id="library-count" class="library-count">0 files</span>
+        </div>
+        <div class="panel-body library-list-body">
+          <ul id="library-list" class="library-list"></ul>
+        </div>
+      </section>
+
     </div>
-  </section>
+  </main>
 
   <script src="main.js"></script>
 </body>
