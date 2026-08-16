@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bible Study Workspace</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       HEADER — thin workstation command bar
+  ============================================================= -->
+  <header class="app-header">
+    <div class="header-left">
+      <span class="app-title">BIBLE STUDY WORKSPACE</span>
+    </div>
+    <div class="header-right">
+      <span id="save-status" class="save-status">Saved</span>
+      <span class="divider">|</span>
+      <span id="current-date" class="current-date"></span>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       MAIN AREA — three column grid
+  ============================================================= -->
+  <main class="workspace">
+
+    <!-- ---------------- LEFT PANEL: Bible Navigation ---------------- -->
+    <section class="panel nav-panel" aria-label="Bible Navigation">
+      <div class="panel-header">
+        <h2>Bible Navigation</h2>
+      </div>
+      <div class="panel-body nav-body">
+        <input
+          id="book-search"
+          type="text"
+          class="search-input"
+          placeholder="Search books..."
+          aria-label="Search Bible books"
+        />
+        <div class="chapter-select-row" id="chapter-select-row" hidden>
+          <label for="chapter-select" class="chapter-label">Chapter</label>
+          <select id="chapter-select" class="chapter-select"></select>
+        </div>
+        <ul id="book-list" class="book-list"></ul>
+      </div>
+    </section>
+
+    <!-- ---------------- CENTER PANEL: Scripture Viewer ---------------- -->
+    <section class="panel scripture-panel" aria-label="Scripture Viewer">
+      <div class="panel-header">
+        <h2>Scripture Viewer</h2>
+      </div>
+      <div class="panel-body scripture-body">
+        <div class="scripture-heading">
+          <span id="scripture-book" class="scripture-book">Select a Book</span>
+          <span id="scripture-chapter" class="scripture-chapter"></span>
+        </div>
+        <div id="verse-container" class="verse-container">
+          <p class="empty-state">Choose a book from the left panel to begin reading.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------------- RIGHT PANEL: Study Notes ---------------- -->
+    <section class="panel notes-panel" aria-label="Study Notes">
+      <div class="panel-header">
+        <h2>Study Notes</h2>
+      </div>
+      <div class="panel-body notes-body">
+        <div class="notes-reference-row">
+          <span class="notes-label">Selected Reference</span>
+          <span id="notes-reference" class="notes-reference">None</span>
+        </div>
+        <textarea
+          id="notes-textarea"
+          class="notes-textarea"
+          placeholder="Select a verse and write your study notes here..."
+          disabled
+        ></textarea>
+        <div class="button-row">
+          <button id="save-note-btn" class="btn btn-primary" disabled>SAVE NOTE</button>
+          <button id="clear-note-btn" class="btn btn-secondary" disabled>CLEAR NOTE</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================================
+       BOTTOM PANEL — Daily Journal (full width)
+  ============================================================= -->
+  <section class="panel journal-panel" aria-label="Daily Journal">
+    <div class="panel-header">
+      <h2>Daily Journal</h2>
+    </div>
+    <div class="panel-body journal-body">
+      <textarea
+        id="journal-textarea"
+        class="journal-textarea"
+        placeholder="Write your daily reflections, prayers, and study observations here..."
+      ></textarea>
+      <div class="button-row">
+        <button id="save-journal-btn" class="btn btn-primary">SAVE JOURNAL</button>
+        <button id="clear-journal-btn" class="btn btn-secondary">CLEAR JOURNAL</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="main.js"></script>
+</body>
+</html>
