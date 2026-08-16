@@ -1,215 +1,254 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bible Study Workspace</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aletheia | Knowledge Platform</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- ============================================================
-       HEADER — thin workstation command bar
-  ============================================================= -->
-  <header class="app-header">
-    <div class="header-left">
-      <span class="app-title">BIBLE STUDY WORKSPACE</span>
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">ALETHEIA.OS</div>
+    
+    <div class="nav-section">
+      <div class="nav-label">Knowledge Workspace</div>
+      <button class="nav-item active" data-target="view-dashboard">Dashboard</button>
+      <button class="nav-item" data-target="view-reader">Scripture Reader</button>
+      <button class="nav-item" data-target="view-canvas">Knowledge Canvas</button>
+      <button class="nav-item" data-target="view-library">Resource Library</button>
     </div>
-    <div class="header-right">
-      <span id="save-status" class="save-status">Saved</span>
-      <span class="divider">|</span>
-      <span id="current-date" class="current-date"></span>
+
+    <div class="nav-section">
+      <div class="nav-label">Discovery & Community</div>
+      <button class="nav-item" data-target="view-discovery">Explore Platform</button>
+      <button class="nav-item" data-target="view-collections">Study Collections</button>
     </div>
-  </header>
 
-  <!-- ============================================================
-       VIEW TABS — switch between Workspace / Journal / Library
-  ============================================================= -->
-  <nav class="view-tabs" aria-label="Workspace sections">
-    <button class="view-tab active" data-view="workspace">01 &nbsp; STUDY</button>
-    <button class="view-tab" data-view="journal">02 &nbsp; JOURNAL</button>
-    <button class="view-tab" data-view="library">03 &nbsp; LIBRARY</button>
-    <button class="view-tab" data-view="canvas">04 &nbsp; CANVAS</button>
-  </nav>
-
-  <!-- ============================================================
-       VIEW: STUDY WORKSPACE — three column grid
-  ============================================================= -->
-  <main class="view active" id="view-workspace">
-    <div class="workspace">
-
-      <!-- ---------------- LEFT PANEL: Bible Navigation ---------------- -->
-      <section class="panel nav-panel" aria-label="Bible Navigation">
-        <div class="panel-header">
-          <h2>Bible Navigation</h2>
-        </div>
-        <div class="panel-body nav-body">
-          <input
-            id="book-search"
-            type="text"
-            class="search-input"
-            placeholder="Search books..."
-            aria-label="Search Bible books"
-          />
-          <div class="chapter-select-row" id="chapter-select-row" hidden>
-            <label for="chapter-select" class="chapter-label">Chapter</label>
-            <select id="chapter-select" class="chapter-select"></select>
-          </div>
-          <ul id="book-list" class="book-list"></ul>
-        </div>
-      </section>
-
-      <!-- ---------------- CENTER PANEL: Scripture Viewer ---------------- -->
-      <section class="panel scripture-panel" aria-label="Scripture Viewer">
-        <div class="panel-header">
-          <h2>Scripture Viewer</h2>
-        </div>
-        <div class="panel-body scripture-body">
-          <div class="scripture-heading">
-            <span id="scripture-book" class="scripture-book">Select a Book</span>
-            <span id="scripture-chapter" class="scripture-chapter"></span>
-          </div>
-          <div id="verse-container" class="verse-container">
-            <p class="empty-state">Choose a book from the left panel to begin reading.</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- ---------------- RIGHT PANEL: Study Notes ---------------- -->
-      <section class="panel notes-panel" aria-label="Study Notes">
-        <div class="panel-header">
-          <h2>Study Notes</h2>
-        </div>
-        <div class="panel-body notes-body">
-          <div class="notes-reference-row">
-            <span class="notes-label">Selected Reference</span>
-            <span id="notes-reference" class="notes-reference">None</span>
-          </div>
-          <textarea
-            id="notes-textarea"
-            class="notes-textarea"
-            placeholder="Select a verse and write your study notes here..."
-            disabled
-          ></textarea>
-          <div class="button-row">
-            <button id="save-note-btn" class="btn btn-primary" disabled>SAVE NOTE</button>
-            <button id="clear-note-btn" class="btn btn-secondary" disabled>CLEAR NOTE</button>
-          </div>
-        </div>
-      </section>
-
+    <div class="sidebar-footer">
+      <div class="user-info">SYS.ADMIN // ONLINE</div>
     </div>
-  </main>
+  </aside>
 
-  <!-- ============================================================
-       VIEW: JOURNAL — archive of dated entries + editor
-  ============================================================= -->
-  <main class="view" id="view-journal">
-    <div class="journal-layout">
+  <!-- MAIN CONTENT AREA -->
+  <main class="main-content">
 
-      <!-- ---------------- LEFT: entry list ---------------- -->
-      <section class="panel journal-list-panel" aria-label="Journal Entries">
-        <div class="panel-header journal-list-header">
-          <h2>Journal Entries</h2>
-          <button id="new-entry-btn" class="btn btn-primary btn-compact">+ NEW</button>
-        </div>
-        <div class="panel-body journal-list-body">
-          <ul id="journal-entry-list" class="journal-entry-list"></ul>
-        </div>
-      </section>
-
-      <!-- ---------------- RIGHT: entry editor ---------------- -->
-      <section class="panel journal-editor-panel" aria-label="Journal Editor">
-        <div class="panel-header">
-          <h2>Entry</h2>
-        </div>
-        <div class="panel-body journal-editor-body">
-          <div class="journal-meta-row">
-            <input
-              id="journal-title-input"
-              type="text"
-              class="journal-title-input"
-              placeholder="Entry title..."
-              disabled
-            />
-            <span id="journal-entry-date" class="journal-entry-date">No entry selected</span>
-          </div>
-          <textarea
-            id="journal-editor-textarea"
-            class="journal-editor-textarea"
-            placeholder="Select or create an entry to begin writing..."
-            disabled
-          ></textarea>
-          <div class="button-row">
-            <button id="save-journal-btn" class="btn btn-primary" disabled>SAVE ENTRY</button>
-            <button id="delete-journal-btn" class="btn btn-secondary" disabled>DELETE ENTRY</button>
-          </div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <!-- ============================================================
-       VIEW: LIBRARY — uploaded documents (PDFs, docs, etc.)
-  ============================================================= -->
-  <main class="view" id="view-library">
-    <div class="library-layout">
-
-      <section class="panel library-upload-panel" aria-label="Upload Documents">
-        <div class="panel-header">
-          <h2>Add To Library</h2>
-        </div>
-        <div class="panel-body library-upload-body">
-          <label for="file-upload-input" class="upload-dropzone" id="upload-dropzone">
-            <span class="upload-dropzone-title">DROP FILES OR CLICK TO BROWSE</span>
-            <span class="upload-dropzone-sub">PDF · DOCX · TXT · Images · Any file type</span>
-          </label>
-          <input
-            id="file-upload-input"
-            type="file"
-            class="file-upload-input"
-            multiple
-            hidden
-          />
-        </div>
-      </section>
-
-      <section class="panel library-list-panel" aria-label="Document Library">
-        <div class="panel-header">
-          <h2>Documents</h2>
-          <span id="library-count" class="library-count">0 files</span>
-        </div>
-        <div class="panel-body library-list-body">
-          <ul id="library-list" class="library-list"></ul>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <!-- ============================================================
-       VIEW: CANVAS — freeform mind-map of connected thoughts
-  ============================================================= -->
-  <main class="view" id="view-canvas">
-    <div class="canvas-layout">
-
-      <div class="canvas-toolbar">
-        <button id="add-node-btn" class="btn btn-primary btn-compact">+ NODE</button>
-        <button id="link-mode-btn" class="btn btn-secondary btn-compact link-mode-btn">LINK MODE: OFF</button>
-        <span id="canvas-hint" class="canvas-hint">Drag a node's header to move it. Turn on link mode, then click two nodes to connect them. Click a line to remove it.</span>
+    <!-- 1. DASHBOARD VIEW -->
+    <section id="view-dashboard" class="view active">
+      <div class="view-header">
+        <h1 class="view-title">WORKSPACE DASHBOARD</h1>
       </div>
-
-      <div class="canvas-scroll" id="canvas-scroll">
-        <div class="canvas-surface" id="canvas-surface">
-          <svg id="canvas-links-svg" class="canvas-links-svg"></svg>
-          <!-- Nodes are injected here by main.js -->
+      <div class="view-body grid-layout">
+        <div class="widget">
+          <div class="widget-header">RECENT CANVASES</div>
+          <div class="widget-body list-menu">
+            <div class="list-item" onclick="app.switchView('view-canvas')">Christology in John <span>Edited 2h ago</span></div>
+            <div class="list-item">Prophecy & Fulfillment <span>Edited 1d ago</span></div>
+            <div class="list-item">Pauline Epistles Map <span>Edited 3d ago</span></div>
+          </div>
+        </div>
+        <div class="widget">
+          <div class="widget-header">QUICK ACTIONS</div>
+          <div class="widget-body flex-col gap-10">
+            <button class="btn btn-primary" onclick="app.switchView('view-canvas')">+ NEW CANVAS MAP</button>
+            <button class="btn btn-secondary" onclick="app.switchView('view-library')">UPLOAD RESOURCE</button>
+            <button class="btn btn-secondary">NEW STUDY NOTE</button>
+          </div>
         </div>
       </div>
+    </section>
 
-    </div>
+    <!-- 2. SCRIPTURE READER VIEW -->
+    <section id="view-reader" class="view">
+      <div class="view-header">
+        <h1 class="view-title">SCRIPTURE READER</h1>
+        <div class="header-actions">
+          <select class="outline-select"><option>ESV</option><option>NASB</option></select>
+        </div>
+      </div>
+      <div class="view-body two-col-layout">
+        <div class="panel border-right">
+          <div class="panel-header">NAVIGATION</div>
+          <ul class="list-menu">
+            <li class="list-item active">John</li>
+            <li class="list-item">Romans</li>
+            <li class="list-item">Hebrews</li>
+          </ul>
+        </div>
+        <div class="panel reader-content">
+          <div class="reader-header">
+            <h2>JOHN 1</h2>
+          </div>
+          <div class="verse-list">
+            <div class="verse"><span class="v-num">1</span> In the beginning was the Word, and the Word was with God, and the Word was God.</div>
+            <div class="verse"><span class="v-num">2</span> He was in the beginning with God.</div>
+            <div class="verse"><span class="v-num">3</span> All things were made through him, and without him was not any thing made that was made.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. KNOWLEDGE CANVAS VIEW -->
+    <section id="view-canvas" class="view">
+      <div class="view-header">
+        <h1 class="view-title">CANVAS: CHRISTOLOGY IN JOHN</h1>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="btn-add-node">+ ADD NODE</button>
+          <button class="btn btn-secondary" id="btn-publish">PUBLISH STUDY</button>
+        </div>
+      </div>
+      
+      <!-- Canvas Toolbar & Properties -->
+      <div class="canvas-workspace">
+        <div class="canvas-sidebar">
+          <div class="panel-header">TOOLS</div>
+          <div class="tool-grid">
+            <button class="btn btn-compact" onclick="app.addNode('text')">Text Note</button>
+            <button class="btn btn-compact" onclick="app.addNode('verse')">Verse Block</button>
+            <button class="btn btn-compact" onclick="app.addNode('image')">Image</button>
+            <button class="btn btn-compact" onclick="app.addNode('pdf')">PDF Ref</button>
+          </div>
+          <div class="panel-header" style="margin-top: 20px;">LINK PROPERTIES</div>
+          <div class="form-group">
+            <label>Relationship Type</label>
+            <select id="link-type-select" class="outline-select full-width">
+              <option value="Supports">Supports</option>
+              <option value="Fulfillment Of">Fulfillment Of</option>
+              <option value="Contradicts">Contradicts</option>
+              <option value="Explains">Explains</option>
+              <option value="References">References</option>
+            </select>
+          </div>
+          <div class="form-group mt-10">
+            <label>Direction</label>
+            <select id="link-dir-select" class="outline-select full-width">
+              <option value="uni">Unidirectional (A → B)</option>
+              <option value="bi">Bidirectional (A ↔ B)</option>
+              <option value="none">None (A — B)</option>
+            </select>
+          </div>
+          <div class="canvas-instructions mt-10">
+            * Shift+Drag between nodes to create a link. Click a link to select it.
+          </div>
+        </div>
+        
+        <!-- The Infinite Canvas Surface -->
+        <div class="canvas-container" id="canvas-container">
+          <div class="canvas-surface" id="canvas-surface">
+            <!-- SVG for routing links -->
+            <svg class="canvas-links-svg" id="canvas-links">
+              <defs>
+                <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="var(--text)" />
+                </marker>
+              </defs>
+            </svg>
+            <!-- Nodes are dynamically injected here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. RESOURCE LIBRARY -->
+    <section id="view-library" class="view">
+      <div class="view-header">
+        <h1 class="view-title">RESOURCE LIBRARY</h1>
+      </div>
+      <div class="view-body">
+        <div class="upload-dropzone">
+          <div class="upload-title">DROP ASSETS HERE</div>
+          <div class="upload-sub">Supports PDF, JPG, PNG, Diagrams. Assets are available globally.</div>
+        </div>
+        <div class="library-grid mt-20">
+          <div class="resource-card">
+            <div class="resource-type">PDF</div>
+            <div class="resource-name">Tabernacle_Schematic.pdf</div>
+            <div class="resource-actions">
+              <button class="btn btn-compact">View</button>
+              <button class="btn btn-compact">To Canvas</button>
+            </div>
+          </div>
+          <div class="resource-card">
+            <div class="resource-type">IMG</div>
+            <div class="resource-name">Jerusalem_Map_1stCentury.jpg</div>
+            <div class="resource-actions">
+              <button class="btn btn-compact">View</button>
+              <button class="btn btn-compact">To Canvas</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. DISCOVERY & COMMUNITY -->
+    <section id="view-discovery" class="view">
+      <div class="view-header">
+        <h1 class="view-title">PLATFORM DISCOVERY</h1>
+        <div class="header-actions">
+          <input type="text" class="outline-input" placeholder="Search global studies...">
+        </div>
+      </div>
+      <div class="view-body">
+        <h2 class="section-heading">FEATURED PUBLIC STUDIES</h2>
+        <div class="discovery-grid">
+          <!-- Card 1 -->
+          <div class="study-card" onclick="app.switchView('view-published-study')">
+            <div class="study-cover" style="background: var(--line-dim);"></div>
+            <div class="study-meta">AUTHOR: THEO_LOGOS // 24K VIEWS</div>
+            <h3 class="study-title">The Logos: A Comprehensive Mapping of John 1</h3>
+            <p class="study-desc">An interactive canvas exploring the dual nature of Christ, tying Greek philosophy to Hebrew prophecy.</p>
+            <div class="study-tags"><span>CHRISTOLOGY</span><span>GOSPEL OF JOHN</span></div>
+          </div>
+          <!-- Card 2 -->
+          <div class="study-card">
+            <div class="study-cover" style="background: var(--line-dim);"></div>
+            <div class="study-meta">AUTHOR: BEREAN_SEARCH // 12K VIEWS</div>
+            <h3 class="study-title">Paul's Missionary Journeys</h3>
+            <p class="study-desc">Geospatial and temporal mapping of the book of Acts alongside the Pauline Epistles.</p>
+            <div class="study-tags"><span>ACTS</span><span>GEOGRAPHY</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. PUBLISHED STUDY PAGE -->
+    <section id="view-published-study" class="view">
+      <div class="view-header">
+        <button class="btn btn-secondary btn-compact" onclick="app.switchView('view-discovery')">← BACK TO DISCOVERY</button>
+        <div class="header-actions">
+          <button class="btn btn-primary btn-compact">CLONE TO WORKSPACE</button>
+        </div>
+      </div>
+      <div class="published-study-content">
+        <header class="study-header">
+          <h1>THE LOGOS: A COMPREHENSIVE MAPPING OF JOHN 1</h1>
+          <div class="study-author">Published by Theo_Logos • Interactive Canvas included</div>
+        </header>
+        <div class="study-article">
+          <p>This study bridges the conceptual frameworks of the Hellenistic "Logos" and the Hebrew "Memra" to demonstrate how John introduces Christ.</p>
+          
+          <div class="embedded-resource">
+            <div class="embed-label">EMBEDDED CANVAS VIEW (READ-ONLY)</div>
+            <div class="mock-embed-canvas">
+              [ Interactive Canvas Rendered Here ]
+            </div>
+          </div>
+          
+          <h2>The Pre-Existence</h2>
+          <p>By stating "In the beginning was the Word," John deliberately evokes Genesis 1:1, setting up an eternal timeline rather than a created origin.</p>
+          
+          <div class="embedded-resource">
+            <div class="embed-label">LINKED RESOURCE</div>
+            <div class="mock-embed-pdf">
+              📄 Genesis_Targum_Analysis.pdf
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
   </main>
-
   <script src="main.js"></script>
 </body>
 </html>
