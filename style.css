@@ -1,7 +1,17 @@
 /* ==================================================================
    BIBLE STUDY WORKSPACE — STYLESHEET
-   Strict black & white. Zero border-radius. Grid-based workstation UI.
+   Strict black & white, black-dominant. Zero border-radius throughout.
 ================================================================== */
+
+:root {
+  --bg: #000000;           /* page background — dominant black */
+  --panel-bg: #0A0A0A;     /* panel background, one step off page bg */
+  --panel-header-bg: #161616;
+  --line: #FFFFFF;         /* hairline borders read clearly on black */
+  --line-dim: #3A3A3A;     /* quiet internal dividers */
+  --text: #FFFFFF;
+  --text-dim: #8A8A8A;
+}
 
 /* ---------------- RESET & BASE ---------------- */
 
@@ -19,10 +29,10 @@ html, body {
 
 body {
   font-family: "Courier New", Courier, monospace;
-  background-color: #FFFFFF;
-  color: #000000;
+  background-color: var(--bg);
+  color: var(--text);
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto 1fr;
   min-height: 100vh;
 }
 
@@ -31,22 +41,28 @@ button, input, select, textarea {
   font-size: inherit;
   color: inherit;
   background: none;
-  border: 1px solid #000000;
+  border: 1px solid var(--line);
   outline: none;
 }
 
 button {
   cursor: pointer;
   letter-spacing: 0.05em;
+  background-color: var(--bg);
 }
 
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.35;
+  opacity: 0.3;
 }
 
 ul {
   list-style: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-dim);
 }
 
 /* Sharp keyboard focus, no glow */
@@ -54,8 +70,16 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid #000000;
+  outline: 2px solid var(--text);
   outline-offset: 2px;
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
 }
 
 /* ==================================================================
@@ -67,8 +91,8 @@ textarea:focus-visible {
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  border-bottom: 1px solid #000000;
-  background-color: #FAFAFA;
+  border-bottom: 1px solid var(--line);
+  background-color: var(--panel-header-bg);
 }
 
 .app-title {
@@ -83,15 +107,18 @@ textarea:focus-visible {
   gap: 10px;
   font-size: 12px;
   letter-spacing: 0.04em;
+  color: var(--text-dim);
 }
 
 .save-status {
   font-weight: 700;
   text-transform: uppercase;
+  color: var(--text);
 }
 
 .save-status.unsaved {
   text-decoration: underline;
+  color: var(--text-dim);
 }
 
 .divider {
@@ -99,29 +126,62 @@ textarea:focus-visible {
 }
 
 /* ==================================================================
-   MAIN WORKSPACE — three column grid
+   VIEW TABS
 ================================================================== */
 
-.workspace {
-  display: grid;
-  grid-template-columns: 260px 1fr 340px;
-  min-height: 0;
+.view-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  background-color: var(--bg);
 }
+
+.view-tab {
+  flex: 1;
+  padding: 12px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border: none;
+  border-right: 1px solid var(--line);
+  background-color: var(--bg);
+  color: var(--text-dim);
+}
+
+.view-tab:last-child {
+  border-right: none;
+}
+
+.view-tab:hover {
+  color: var(--text);
+  background-color: var(--panel-header-bg);
+}
+
+.view-tab.active {
+  background-color: var(--text);
+  color: var(--bg);
+}
+
+/* ==================================================================
+   SHARED PANEL STYLES
+================================================================== */
 
 .panel {
   display: flex;
   flex-direction: column;
-  border: 1px solid #000000;
+  border: 1px solid var(--line);
   margin: -1px 0 0 -1px; /* collapse adjoining borders into single 1px lines */
   min-height: 0;
-  background-color: #FFFFFF;
+  background-color: var(--panel-bg);
 }
 
 .panel-header {
-  border-bottom: 1px solid #000000;
+  border-bottom: 1px solid var(--line);
   padding: 10px 14px;
-  background-color: #FAFAFA;
+  background-color: var(--panel-header-bg);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .panel-header h2 {
@@ -141,8 +201,61 @@ textarea:focus-visible {
 }
 
 /* ==================================================================
-   LEFT PANEL — Bible Navigation
+   BUTTONS (shared)
 ================================================================== */
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.btn {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.btn-primary {
+  background-color: var(--text);
+  color: var(--bg);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.btn-secondary {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--text);
+  color: var(--bg);
+}
+
+.btn-compact {
+  flex: none;
+  padding: 6px 10px;
+  font-size: 10px;
+}
+
+/* ==================================================================
+   STUDY WORKSPACE VIEW — three column grid
+================================================================== */
+
+.workspace {
+  display: grid;
+  grid-template-columns: 260px 1fr 340px;
+  min-height: calc(100vh - 96px);
+}
+
+/* ---- Left: Bible Navigation ---- */
 
 .nav-panel {
   border-right: none;
@@ -163,7 +276,7 @@ textarea:focus-visible {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-  border: 1px solid #000000;
+  border: 1px solid var(--line);
   padding: 8px 10px;
 }
 
@@ -173,24 +286,26 @@ textarea:focus-visible {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
+  color: var(--text-dim);
 }
 
 .chapter-select {
   flex: 1;
   padding: 4px 6px;
-  border: 1px solid #000000;
+  border: 1px solid var(--line);
+  background-color: var(--bg);
 }
 
 .book-list {
   overflow-y: auto;
-  border: 1px solid #000000;
+  border: 1px solid var(--line);
   flex: 1;
   min-height: 0;
 }
 
 .book-list li {
   padding: 8px 10px;
-  border-bottom: 1px solid #000000;
+  border-bottom: 1px solid var(--line-dim);
   font-size: 13px;
   cursor: pointer;
   letter-spacing: 0.02em;
@@ -201,13 +316,13 @@ textarea:focus-visible {
 }
 
 .book-list li:hover {
-  background-color: #FAFAFA;
+  background-color: var(--panel-header-bg);
   text-decoration: underline;
 }
 
 .book-list li.active {
-  background-color: #000000;
-  color: #FFFFFF;
+  background-color: var(--text);
+  color: var(--bg);
   font-weight: 700;
 }
 
@@ -222,9 +337,7 @@ textarea:focus-visible {
   text-decoration: none;
 }
 
-/* ==================================================================
-   CENTER PANEL — Scripture Viewer
-================================================================== */
+/* ---- Center: Scripture Viewer ---- */
 
 .scripture-body {
   overflow: hidden;
@@ -234,7 +347,7 @@ textarea:focus-visible {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  border-bottom: 1px solid #000000;
+  border-bottom: 1px solid var(--line);
   padding-bottom: 10px;
   flex-shrink: 0;
 }
@@ -247,7 +360,7 @@ textarea:focus-visible {
 
 .scripture-chapter {
   font-size: 16px;
-  opacity: 0.7;
+  color: var(--text-dim);
 }
 
 .verse-container {
@@ -259,19 +372,19 @@ textarea:focus-visible {
 
 .verse-line {
   padding: 10px 12px;
-  border-bottom: 1px solid #FAFAFA;
+  border-bottom: 1px solid var(--line-dim);
   cursor: pointer;
   line-height: 1.7;
   font-size: 14px;
 }
 
 .verse-line:hover {
-  background-color: #FAFAFA;
+  background-color: var(--panel-header-bg);
 }
 
 .verse-line.selected {
-  background-color: #000000;
-  color: #FFFFFF;
+  background-color: var(--text);
+  color: var(--bg);
 }
 
 .verse-number {
@@ -281,13 +394,11 @@ textarea:focus-visible {
 
 .empty-state {
   padding: 20px 4px;
-  opacity: 0.5;
+  color: var(--text-dim);
   font-size: 13px;
 }
 
-/* ==================================================================
-   RIGHT PANEL — Study Notes
-================================================================== */
+/* ---- Right: Study Notes ---- */
 
 .notes-panel {
   border-left: none;
@@ -301,7 +412,7 @@ textarea:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border: 1px solid #000000;
+  border: 1px solid var(--line);
   padding: 8px 10px;
   flex-shrink: 0;
 }
@@ -311,7 +422,7 @@ textarea:focus-visible {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  opacity: 0.6;
+  color: var(--text-dim);
 }
 
 .notes-reference {
@@ -326,73 +437,256 @@ textarea:focus-visible {
   resize: none;
   line-height: 1.6;
   font-size: 13px;
+  background-color: var(--bg);
 }
 
 /* ==================================================================
-   BUTTONS
+   JOURNAL VIEW — entry list + editor
 ================================================================== */
 
-.button-row {
+.journal-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: calc(100vh - 96px);
+}
+
+.journal-list-panel {
+  border-right: none;
+}
+
+.journal-list-header {
+  gap: 10px;
+}
+
+.journal-list-body {
+  overflow: hidden;
+  padding: 10px;
+}
+
+.journal-entry-list {
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  flex: 1;
+  min-height: 0;
+}
+
+.journal-entry-item {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-dim);
+  cursor: pointer;
+}
+
+.journal-entry-item:last-child {
+  border-bottom: none;
+}
+
+.journal-entry-item:hover {
+  background-color: var(--panel-header-bg);
+}
+
+.journal-entry-item.active {
+  background-color: var(--text);
+  color: var(--bg);
+}
+
+.journal-entry-item-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.journal-entry-item-date {
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.journal-entry-item.active .journal-entry-item-date {
+  color: var(--panel-header-bg);
+}
+
+.journal-entry-item-snippet {
+  font-size: 11px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journal-entry-item.active .journal-entry-item-snippet {
+  color: var(--panel-header-bg);
+}
+
+.journal-empty-list {
+  padding: 20px 12px;
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.journal-editor-body {
+  overflow: hidden;
+}
+
+.journal-meta-row {
+  display: flex;
+  align-items: center;
   gap: 10px;
   flex-shrink: 0;
 }
 
-.btn {
+.journal-title-input {
   flex: 1;
-  padding: 10px 12px;
-  font-size: 11px;
+  padding: 8px 10px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  background-color: var(--bg);
 }
 
-.btn-primary {
-  background-color: #000000;
-  color: #FFFFFF;
+.journal-entry-date {
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  letter-spacing: 0.04em;
 }
 
-.btn-primary:hover:not(:disabled) {
-  background-color: #FFFFFF;
-  color: #000000;
-}
-
-.btn-secondary {
-  background-color: #FFFFFF;
-  color: #000000;
-}
-
-.btn-secondary:hover:not(:disabled) {
-  background-color: #000000;
-  color: #FFFFFF;
+.journal-editor-textarea {
+  flex: 1;
+  min-height: 320px;
+  padding: 12px;
+  resize: none;
+  line-height: 1.6;
+  font-size: 13px;
+  background-color: var(--bg);
 }
 
 /* ==================================================================
-   BOTTOM PANEL — Daily Journal
+   LIBRARY VIEW — upload + document list
 ================================================================== */
 
-.journal-panel {
-  margin-top: -1px;
+.library-layout {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: calc(100vh - 96px);
 }
 
-.journal-body {
-  flex-direction: row;
-  align-items: stretch;
+.library-upload-panel {
+  margin-bottom: -1px;
 }
 
-.journal-textarea {
+.library-upload-body {
+  overflow: visible;
+}
+
+.upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px dashed var(--line);
+  padding: 34px 20px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.drag-over {
+  background-color: var(--panel-header-bg);
+}
+
+.upload-dropzone-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.upload-dropzone-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+.library-count {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  text-transform: none;
+}
+
+.library-list-body {
+  overflow: hidden;
+  padding: 0;
+}
+
+.library-list {
+  overflow-y: auto;
   flex: 1;
-  min-height: 120px;
-  padding: 12px;
-  resize: vertical;
-  line-height: 1.6;
+  min-height: 0;
+}
+
+.library-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line-dim);
   font-size: 13px;
 }
 
-.journal-body .button-row {
+.library-item:last-child {
+  border-bottom: none;
+}
+
+.library-item-info {
+  display: flex;
   flex-direction: column;
-  width: 160px;
-  flex-shrink: 0;
+  gap: 3px;
+  min-width: 0;
+}
+
+.library-item-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-item-meta {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.library-item button {
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background-color: var(--bg);
+}
+
+.library-item button:hover {
+  background-color: var(--text);
+  color: var(--bg);
+}
+
+.library-item .btn-danger:hover {
+  background-color: var(--text);
+  color: var(--bg);
+  text-decoration: line-through;
+}
+
+.library-empty {
+  padding: 24px 16px;
+  color: var(--text-dim);
+  font-size: 12px;
 }
 
 /* ==================================================================
@@ -400,23 +694,30 @@ textarea:focus-visible {
 ================================================================== */
 
 @media (max-width: 900px) {
-  .workspace {
+  .workspace,
+  .journal-layout {
     grid-template-columns: 1fr;
     grid-auto-rows: minmax(220px, auto);
   }
 
   .nav-panel,
-  .notes-panel {
-    border-right: 1px solid #000000;
-    border-left: 1px solid #000000;
+  .notes-panel,
+  .journal-list-panel {
+    border-right: 1px solid var(--line);
+    border-left: 1px solid var(--line);
   }
 
-  .journal-body {
-    flex-direction: column;
+  .library-item {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    gap: 8px;
   }
 
-  .journal-body .button-row {
-    flex-direction: row;
-    width: 100%;
+  .view-tabs {
+    flex-wrap: wrap;
+  }
+
+  .view-tab {
+    flex: 1 1 33%;
   }
 }
